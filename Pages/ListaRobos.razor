@@ -1,0 +1,22 @@
+@page "/robos-lista"
+@using robos.Data
+@using robos.Data.Models
+@inject RobosContext rc
+
+<h3>Lista de Robos</h3>
+<br>
+<div>
+    @foreach (var robo in robos)
+    {
+        <RoboCard Robo="robo" />
+    }
+</div>
+
+@code {
+    private List<Robo> robos = null;
+    
+    protected override void OnInitialized()
+    {
+        robos = rc.Robos.ToList();
+    }
+}

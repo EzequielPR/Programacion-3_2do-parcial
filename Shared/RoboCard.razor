@@ -1,0 +1,41 @@
+@using robos.Data.Models
+
+<div class='alert alert-@(Robo.Id % 2 == 0 ? "info" : "success")'>
+    <div class="row">
+        <div class="col-sm-2">
+            <b>Cedula</b>
+            <p>@Robo.Cedula</p>
+        </div>
+        <div class="col-sm-3">
+            <b>Nombre Apellido</b>
+            <p>@Robo.Nombre @Robo.Apellido</p>
+        </div>
+        <div class="col-sm-2">
+            <b>Fecha del robo</b>
+            <p>@Robo.Fecha.ToShortDateString()</p>
+        </div>
+        <div class="col-sm-5">
+            <b>Dirección del Robo</b>
+            <p>@Robo.Direccion</p>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-2">
+            <b>Valor de lo robado</b>
+            <p>@Robo.Valor.ToString("C0")</p>
+        </div>
+        <div class="col-sm-6">
+            <b>Descripcion (Que se robaron?)</b>
+            <p>@Robo.Descripcion</p>
+        </div>
+        <div class="col-sm-4 text-center">
+            <a href="editar-robo/@Robo.Id" class="btn btn-warning">Editar</a>
+            <a href="exportar-robo/@Robo.Id" class="btn btn-info">Exportar</a>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Robo Robo { get; set; }
+}

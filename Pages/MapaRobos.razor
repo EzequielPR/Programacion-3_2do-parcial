@@ -1,0 +1,64 @@
+@page "/robos-mapa"
+@using robos.Data
+@using robos.Data.Models
+@using BlazorLeaflet
+@using BlazorLeaflet.Models
+@using BlazorLeaflet.Models.Events
+@inject RobosContext rc
+@inject IJSRuntime jsr
+
+<h3>Mapa de Robos</h3>
+<br>
+<div>
+    <div id="mapContainer" style="width: 100%; height: 400px">
+        <LeafletMap Map="mapa" />
+    </div>
+</div>
+<br>
+<div>
+    @if (robo != null) {
+        <RoboCard Robo="robo" />
+    }
+</div>
+
+@code {
+    private Map mapa = null;
+
+    private List<Robo> robos = null;
+    private Robo robo = null;
+
+    protected override void OnInitialized() {
+        robos = rc.Robos.ToList();
+
+        mapa = new Map(jsr) {
+            Center = new LatLng(18.9f, -70f),
+            Zoom = 7.47f
+        };
+
+        mapa.OnInitialized += () => {
+            mapa.AddLayer(new TileLayer {
+                UrlTemplate = "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                Attribution = "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors"
+            });
+
+            foreach (var r in robos) {
+                var marker = new Marker(r.Latitud, r.Longitud) {
+                    Title = r.Id.ToString(),
+                    Tooltip = new Tooltip() {
+                        Content = $"{r.Cedula} {r.Fecha.ToShortDateString()}<br>{r.Nombre} {r.Apellido}<br>{r.Valor.ToString("C0")}"
+                    }
+                };
+
+                marker.OnClick += (InteractiveLayer sender, MouseEvent e) => {
+                    var marker = (Marker) sender;
+
+                    robo = robos.First(x => x.Id == Convert.ToInt32(marker.Title));
+
+                    StateHasChanged();
+                };
+
+                mapa.AddLayer(marker);
+            }
+        };        
+    }
+}

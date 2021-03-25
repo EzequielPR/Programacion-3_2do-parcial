@@ -1,0 +1,54 @@
+@page "/exportar-robo/{RoboId:int}"
+@using robos.Data.Models
+@using robos.Data
+@using BlazorLeaflet
+@using BlazorLeaflet.Models
+@using BlazorLeaflet.Models.Events
+@inject RobosContext rc
+@inject IJSRuntime jsr
+@inject NavigationManager nm
+
+
+<div class="print-this">
+    <div id="mapContainer" style="width: 100%; height: 360px">
+        <LeafletMap Map="mapa" />
+    </div>
+    <br>
+    <div>
+        @if (robo != null) {
+            <RoboCard Robo="robo" />
+        }
+    </div>
+</div>
+<button @onclick="imprimir" class="btn btn-secondary">Imprimir</button>
+
+@code {
+    [Parameter]
+    public int RoboId { get; set; }
+
+    private Robo robo = null;
+    private Map mapa = null;
+
+    protected override void OnInitialized()
+    {
+        robo = rc.Robos.First(x => x.Id == RoboId);
+
+         mapa = new Map(jsr) {
+            Center = new LatLng(robo.Latitud, robo.Longitud),
+            Zoom = 15f
+        };
+
+        mapa.OnInitialized += () => {
+            mapa.AddLayer(new TileLayer {
+                UrlTemplate = "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                Attribution = "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors"
+            });
+            var marker = new Marker(robo.Latitud, robo.Longitud);
+            mapa.AddLayer(marker);
+        };
+    }
+    
+    private void imprimir() {
+        jsr.InvokeVoidAsync("print", null);
+    }
+}

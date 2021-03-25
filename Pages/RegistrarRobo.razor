@@ -1,0 +1,105 @@
+@page "/registrar-robo"
+@using robos.Data.Models
+@using robos.Data
+@using BlazorLeaflet
+@using BlazorLeaflet.Models
+@using BlazorLeaflet.Models.Events
+@inject RobosContext rc
+@inject IJSRuntime jsr
+@inject NavigationManager nm
+
+<h3>Registrar Robo</h3>
+<br>
+<div>
+    <EditForm Model="robo" OnValidSubmit="ValidSubmit">
+        <div class="form-group mb-3">
+            <label>Cedula del Querellante</label>
+            <InputText @bind-Value="robo.Cedula" class="form-control" />
+        </div>
+        <div class="form-group mb-3">
+            <label>Nombre del Querellante</label>
+            <InputText @bind-Value="robo.Nombre" class="form-control" />
+        </div>
+        <div class="form-group mb-3">
+            <label>Apellido del Querellante</label>
+            <InputText @bind-Value="robo.Apellido" class="form-control" />
+        </div>
+        <div class="form-group mb-3">
+            <label>Que se Robaron?</label>
+            <InputTextArea @bind-Value="robo.Descripcion" class="form-control" />
+        </div>
+        <div class="form-group mb-3">
+            <label>Valor de lo Robado (en $)</label>
+            <InputNumber  @bind-Value="robo.Valor" class="form-control" min="0" />
+        </div>
+        <div class="form-group mb-3">
+            <label>Fecha del Robo</label>
+            <InputDate  @bind-Value="robo.Fecha" class="form-control" />
+        </div>
+        <div class="form-group mb-3">
+            <label>Dirección del Robo</label>
+            <InputText @bind-Value="robo.Direccion" class="form-control" />
+        </div>
+        <div class="form-group mb-3">
+            <label>Ubicacion del Robo</label>
+            <div id="mapContainer" style="width: 100%; height: 360px;">
+                <LeafletMap Map="mapa" />
+            </div>
+        </div>
+        <div class="mb-3 text-center">
+            <h4 class="text-danger mt-2 mb-3">@error</h4>
+            <button type="submit" class="btn btn-success w-25">Guardar</button>
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    private Robo robo = new Robo();
+    private string error = "";
+
+    private Map mapa = null;
+    private Marker ubicacionRobo = new Marker(18.9f, -70f) {
+        Draggable = true,
+        Title = "Ubicacion del Robo"
+    };
+
+    private void ValidSubmit() {
+        if (!Functions.ValidaCedula(robo.Cedula)) {
+            error = "La cedula no es valida, verifique";
+            return;
+        }
+
+        error = "";
+        rc.Add(robo);
+        rc.SaveChanges();
+        nm.NavigateTo("robos-lista");
+    }
+
+    protected override void OnInitialized() {
+        mapa = new Map(jsr) {
+            Center = new LatLng(18.9f, -70f),
+            Zoom = 7.47f
+        };
+
+        mapa.OnInitialized += () => {
+            mapa.AddLayer(new TileLayer {
+                UrlTemplate = "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                Attribution = "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors"
+            });
+            mapa.AddLayer(ubicacionRobo);
+        };
+
+        ubicacionRobo.OnDrag += (Marker sender, DragEvent e) => {
+            robo.Latitud = e.LatLng.Lat;
+            robo.Longitud = e.LatLng.Lng;
+        };
+
+        mapa.OnClick += (Map sender, MouseEvent e) => {
+            robo.Latitud = e.LatLng.Lat;
+            robo.Longitud = e.LatLng.Lng;
+            ubicacionRobo.Position = e.LatLng;
+            mapa.RemoveLayer(ubicacionRobo);
+            mapa.AddLayer(ubicacionRobo);
+        };
+    }
+}
